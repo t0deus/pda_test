@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>КПК Зоны | ЧАЭС</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="radiation-layer" id="radiationLayer" aria-hidden="true"></div>
+
+  <main class="pda-stage" aria-label="КПК Зоны">
+    <section class="pda-shell">
+      <div class="shell-ridge shell-ridge-top" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="shell-ridge shell-ridge-bottom" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div class="pda-corner pda-corner-left"></div>
+      <div class="pda-corner pda-corner-right"></div>
+
+      <aside class="pda-side pda-side-left" aria-hidden="true">
+        <span class="micro-led green"></span>
+        <span class="micro-led red"></span>
+        <span class="side-label">zone pda</span>
+        <span class="side-screw"></span>
+        <span class="side-screw"></span>
+        <span class="side-groove"></span>
+      </aside>
+
+      <section class="pda-screen">
+        <header class="screen-topbar">
+          <div class="device-id">
+            <span>A1P505-06</span>
+            <strong>Чернобыльская зона отчуждения</strong>
+          </div>
+          <div class="status-cluster">
+            <span class="status-pill" id="radiationPill">фон <strong id="statusRadiation">0.42</strong></span>
+            <span class="status-pill" id="signalPill">связь <strong id="statusSignal">31%</strong></span>
+            <button class="sound-toggle" id="soundToggle" type="button" aria-pressed="false" aria-label="Включить звук">
+              <span class="sound-icon" aria-hidden="true"><span></span></span>
+              <span class="sound-text">Выкл</span>
+            </button>
+            <time id="pdaTime">19:08</time>
+          </div>
+        </header>
+
+        <nav class="pda-tabs" aria-label="Разделы КПК">
+          <button class="tab-button active" type="button" data-tab="map">Карта</button>
+          <button class="tab-button" type="button" data-tab="archive">Архив</button>
+          <button class="tab-button" type="button" data-tab="relations">Фракции</button>
+          <button class="tab-button" type="button" data-tab="anomalies">Аномалии</button>
+          <button class="tab-button" type="button" data-tab="gear">Снаряжение</button>
+          <button class="tab-button" type="button" data-tab="radio">Радио</button>
+        </nav>
+
+        <div class="task-strip">
+          <span id="activeTask">Оперативная сводка: сектор ЧАЭС под наблюдением</span>
+          <span>канал: 104.7</span>
+        </div>
+
+        <div class="screen-body">
+          <section class="tab-panel active" id="tab-map" aria-labelledby="tab-map-title">
+            <div class="panel-title-row">
+              <div>
+                <p class="panel-kicker">Area map</p>
+                <h1 id="tab-map-title">Оперативная карта</h1>
+              </div>
+              <div class="panel-readout">
+                <span>режим</span>
+                <strong>terrain scan</strong>
+              </div>
+            </div>
+
+            <div class="map-workspace">
+              <div class="pda-map" aria-label="Карта зоны">
+                <div class="map-grid"></div>
+                <div class="map-noise"></div>
+                <div class="map-sector sector-north" aria-hidden="true">центральная зона</div>
+                <div class="map-sector sector-mid" aria-hidden="true">дикая территория</div>
+                <div class="map-sector sector-south" aria-hidden="true">южный периметр</div>
+                <svg class="map-routes" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                  <path class="route route-shadow" d="M44 82 L50 63 L42 45 L56 30 L68 16"></path>
+                  <path class="route route-main" d="M44 82 L50 63 L42 45 L56 30 L68 16"></path>
+                  <path class="route route-shadow route-branch-shadow" d="M44 82 L25 70 L50 63"></path>
+                  <path class="route route-branch" d="M44 82 L25 70 L50 63"></path>
+                </svg>
+                <div class="map-coordinates" aria-hidden="true">
+                  <span>юг</span><span>центр</span><span>север</span><span>чаэс</span>
+                </div>
+                <div class="map-compass" aria-hidden="true"><span>с</span></div>
+                <button class="map-point active" style="--x: 68%; --y: 16%" type="button" data-location="plant">
+                  <span class="point-dot"></span><span class="point-name">ЧАЭС</span>
+                </button>
+                <button class="map-point" style="--x: 56%; --y: 30%" type="button" data-location="pripyat">
+                  <span class="point-dot"></span><span class="point-name">Припять</span>
+                </button>
+                <button class="map-point" style="--x: 42%; --y: 45%" type="button" data-location="forest">
+                  <span class="point-dot"></span><span class="point-name">Рыжий лес</span>
+                </button>
+                <button class="map-point" style="--x: 44%; --y: 82%" type="button" data-location="cordon">
+                  <span class="point-dot"></span><span class="point-name">Кордон</span>
+                </button>
+                <button class="map-point" style="--x: 50%; --y: 63%" type="button" data-location="bar">
+                  <span class="point-dot"></span><span class="point-name">Бар</span>
+                </button>
+                <button class="map-point" style="--x: 25%; --y: 70%" type="button" data-location="swamps">
+                  <span class="point-dot"></span><span class="point-name">Болота</span>
+                </button>
+                <div class="map-tools" aria-hidden="true">
+                  <span>+</span><span>-</span><span>□</span><span>↗</span>
+                </div>
+              </div>
+
+              <aside class="intel-card" aria-live="polite">
+                <div class="card-header">
+                  <span id="locationCode">объект 04</span>
+                  <strong id="locationSignal">фон высокий</strong>
+                </div>
+                <h2 id="locationTitle">ЧАЭС</h2>
+                <p id="locationText">
+                  Центральная точка зоны. Руины четвертого энергоблока и новый
+                  защитный конфайнмент остаются главным символом катастрофы.
+                </p>
+                <div class="stat-grid">
+                  <span><strong id="locationDanger">92%</strong> опасность</span>
+                  <span><strong id="locationAccess">закрыт</strong> доступ</span>
+                </div>
+                <div class="meter" aria-label="Уровень опасности">
+                  <span style="--value: 92%"></span>
+                </div>
+                <p class="terminal-note" id="locationNote">Рекомендуется обходить сектор без защитного снаряжения.</p>
+              </aside>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="tab-archive" aria-labelledby="tab-archive-title">
+            <div class="panel-title-row">
+              <div>
+                <p class="panel-kicker">Archive</p>
+                <h1 id="tab-archive-title">Досье ЧАЭС</h1>
+              </div>
+              <div class="panel-readout">
+                <span>доступ</span>
+                <strong>damaged records</strong>
+              </div>
+            </div>
+            <div class="split-console">
+              <nav class="file-list" aria-label="Архивные записи">
+                <button class="file-button active" type="button" data-record="test">26.04.1986 / испытание</button>
+                <button class="file-button" type="button" data-record="evacuation">27.04.1986 / эвакуация</button>
+                <button class="file-button" type="button" data-record="liquidation">1986 / ликвидация</button>
+                <button class="file-button" type="button" data-record="exclusion">зона отчуждения</button>
+              </nav>
+              <article class="record-viewer">
+                <img src="assets/no-data.svg" alt="NO DATA" class="no-data-img">
+                <div>
+                  <span class="record-state" id="recordState">record damaged</span>
+                  <h2 id="recordTitle">Испытание турбогенератора</h2>
+                  <p id="recordText">
+                    Ночная проверка режима выбега турбины привела к неустойчивому
+                    состоянию реактора РБМК-1000. После теплового разгона активная
+                    зона была разрушена, начался выброс радиоактивных материалов.
+                  </p>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="tab-relations" aria-labelledby="tab-relations-title">
+            <div class="panel-title-row">
+              <div>
+                <p class="panel-kicker">Relations</p>
+                <h1 id="tab-relations-title">Фракции</h1>
+              </div>
+              <div class="panel-readout">
+                <span>протокол</span>
+                <strong>field intel</strong>
+              </div>
+            </div>
+            <div class="relations-layout">
+              <nav class="relation-list" aria-label="Список фракций">
+                <button class="relation-button active" type="button" data-faction="stalkers">Сталкеры</button>
+                <button class="relation-button" type="button" data-faction="bandits">Бандиты</button>
+                <button class="relation-button" type="button" data-faction="military">Военные</button>
+                <button class="relation-button" type="button" data-faction="freedom">Свобода</button>
+                <button class="relation-button" type="button" data-faction="duty">Долг</button>
+                <button class="relation-button" type="button" data-faction="monolith">Монолит</button>
+              </nav>
+              <article class="faction-dossier">
+                <img src="assets/faction-stalkers.png" alt="Сталкеры в зоне" class="faction-image" id="factionImage">
+                <div class="dossier-body">
+                  <span class="record-state" id="factionStatus">нейтрально</span>
+                  <h2 id="factionTitle">Сталкеры</h2>
+                  <p id="factionText">Одиночки, проводники и охотники за редкими находками. Живут слухами, тайниками и осторожностью.</p>
+                  <div class="stat-grid">
+                    <span><strong id="factionThreat">42%</strong> угроза</span>
+                    <span><strong id="factionZone">кордон</strong> зона</span>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="tab-anomalies" aria-labelledby="tab-anomalies-title">
+            <div class="panel-title-row">
+              <div>
+                <p class="panel-kicker">Guide</p>
+                <h1 id="tab-anomalies-title">Аномалии</h1>
+              </div>
+              <div class="panel-readout">
+                <span>детектор</span>
+                <strong>unstable</strong>
+              </div>
+            </div>
+            <div class="anomaly-grid">
+              <article class="anomaly-card">
+                <img src="assets/no-data.svg" alt="NO DATA">
+                <h2>Электра</h2>
+                <p>Световые вспышки, сухой треск в наушниках и резкий запах озона.</p>
+                <span>угроза: высокая</span>
+              </article>
+              <article class="anomaly-card">
+                <img src="assets/no-data.svg" alt="NO DATA">
+                <h2>Жарка</h2>
+                <p>Воздух дрожит, трава обуглена, металл нагревается даже без огня.</p>
+                <span>угроза: высокая</span>
+              </article>
+              <article class="anomaly-card">
+                <img src="assets/no-data.svg" alt="NO DATA">
+                <h2>Карусель</h2>
+                <p>Гравитационный вихрь поднимает мусор и ломает траекторию движения.</p>
+                <span>угроза: критическая</span>
+              </article>
+              <article class="anomaly-card">
+                <img src="assets/no-data.svg" alt="NO DATA">
+                <h2>Пси-поле</h2>
+                <p>Головная боль, шум в радиоэфире, потеря ориентации и паника.</p>
+                <span>угроза: неизвестна</span>
+              </article>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="tab-gear" aria-labelledby="tab-gear-title">
+            <div class="panel-title-row">
+              <div>
+                <p class="panel-kicker">Statistics</p>
+                <h1 id="tab-gear-title">Снаряжение</h1>
+              </div>
+              <div class="panel-readout">
+                <span>инвентарь</span>
+                <strong>field kit</strong>
+              </div>
+            </div>
+            <div class="inventory-grid">
+              <article class="gear-card gear-dosimeter">
+                <span>01</span>
+                <img src="assets/no-data.svg" alt="NO DATA" class="gear-thumb">
+                <strong>Дозиметр</strong>
+                <p>фон, импульсы, предупреждение</p>
+              </article>
+              <article class="gear-card gear-mask">
+                <span>02</span>
+                <img src="assets/no-data.svg" alt="NO DATA" class="gear-thumb">
+                <strong>Противогаз</strong>
+                <p>пыль, аэрозоли, химические пятна</p>
+              </article>
+              <article class="gear-card gear-bolts">
+                <span>03</span>
+                <img src="assets/no-data.svg" alt="NO DATA" class="gear-thumb">
+                <strong>Болты</strong>
+                <p>проверка аномалий на маршруте</p>
+              </article>
+              <article class="gear-card gear-medkit">
+                <span>04</span>
+                <img src="assets/no-data.svg" alt="NO DATA" class="gear-thumb">
+                <strong>Аптечка</strong>
+                <p>первая помощь и антирад</p>
+              </article>
+              <article class="gear-card gear-detector">
+                <span>05</span>
+                <img src="assets/no-data.svg" alt="NO DATA" class="gear-thumb">
+                <strong>Детектор</strong>
+                <p>поиск артефактов и активных полей</p>
+              </article>
+              <article class="empty-slot"><img src="assets/no-data.svg" alt="NO DATA"></article>
+            </div>
+          </section>
+
+          <section class="tab-panel" id="tab-radio" aria-labelledby="tab-radio-title">
+            <div class="panel-title-row">
+              <div>
+                <p class="panel-kicker">Radio</p>
+                <h1 id="tab-radio-title">Сообщения</h1>
+              </div>
+              <div class="panel-readout">
+                <span>частота</span>
+                <strong>104.7</strong>
+              </div>
+            </div>
+            <div class="radio-log" id="radioLog" aria-live="polite">
+              <p><span>19:08</span> ...сектор Р-17 закрыт, фон растет...</p>
+              <p><span>19:10</span> ...группа не вышла на связь после перехода через лес...</p>
+              <p><span>19:12</span> ...передайте бару: маршрут через болота нестабилен...</p>
+            </div>
+          </section>
+        </div>
+
+        <div class="screen-radiation" id="screenRadiation" aria-hidden="true"></div>
+        <div class="screen-corruption" id="screenCorruption" aria-hidden="true"></div>
+        <div class="screen-overlay screen-off active" id="screenOff" aria-hidden="true">
+          <div class="dark-glass"></div>
+          <p>power offline</p>
+          <span>press PWR</span>
+        </div>
+        <div class="screen-overlay screen-boot" id="screenBoot" aria-hidden="true">
+          <div class="boot-lines">
+            <span>zone.os / boot sequence</span>
+            <span>memory check ........ ok</span>
+            <span>radiation sensor .... unstable</span>
+            <span>archive stream ...... damaged</span>
+            <span>map module .......... online</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="pda-side pda-side-right">
+        <span class="side-screw"></span>
+        <button class="hardware-button danger" id="powerButton" type="button" aria-label="Питание"><span>PWR</span></button>
+        <button class="hardware-button" type="button" data-tab-shortcut="map" aria-label="Карта"><span>MAP</span></button>
+        <button class="hardware-button" type="button" data-tab-shortcut="radio" aria-label="Радио"><span>RAD</span></button>
+        <div class="led-stack" aria-hidden="true">
+          <span></span><span></span><span class="red"></span><span></span>
+        </div>
+        <button class="hardware-button wide" type="button" data-tab-shortcut="archive" aria-label="Архив"><span>ARC</span></button>
+        <span class="side-screw"></span>
+      </aside>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
