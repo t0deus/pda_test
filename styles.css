@@ -528,6 +528,13 @@ button {
 .screen-boot.active .boot-lines span:nth-child(4) { animation-delay: 1180ms; }
 .screen-boot.active .boot-lines span:nth-child(5) { animation-delay: 1660ms; }
 
+.has-gsap .screen-boot.active .boot-lines span,
+.has-gsap .screen-corruption.is-active,
+.has-gsap .tab-panel.active,
+.has-gsap .rad-speck {
+  animation: none;
+}
+
 .screen-radiation {
   z-index: 14;
   overflow: hidden;
@@ -1086,7 +1093,7 @@ p {
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.32);
   transform: translateY(-50%);
   white-space: nowrap;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .map-point[data-location="forest"] .point-name,

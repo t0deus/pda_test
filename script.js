@@ -199,7 +199,10 @@ const factionThreat = document.querySelector("#factionThreat");
 const factionZone = document.querySelector("#factionZone");
 const radioLog = document.querySelector("#radioLog");
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+const hasGsap = typeof window.gsap !== "undefined";
+const hasHowler = typeof window.Howler !== "undefined" && typeof window.Howl !== "undefined";
+const motion = hasGsap && !prefersReducedMotion ? window.gsap : null;
+const bootLineItems = screenBoot.querySelectorAll(".boot-lines span");
 
 let audioContext;
 let audioMaster;
@@ -211,9 +214,12 @@ let isBooting = false;
 let radiationStarted = false;
 let radiationLevel = 0.42;
 let signalLevel = 31;
+let bootTimeline;
+let audioUnlockSound;
 
 window.addEventListener("load", () => {
   updateClock();
+  initializeMotionState();
   document.body.classList.add("pda-is-off");
 });
 
@@ -312,14 +318,16 @@ soundToggle.addEventListener("click", async () => {
     return;
   }
 
-  if (!AudioContextClass) {
+  if (!hasHowler) {
     soundText.textContent = "Нет";
     soundToggle.setAttribute("aria-label", "Звук не поддерживается");
     return;
   }
 
-  if (!audioContext) {
-    createAudioGraph();
+  if (!audioContext && !createAudioGraph()) {
+    soundText.textContent = "Нет";
+    soundToggle.setAttribute("aria-label", "Звук не поддерживается");
+    return;
   }
 
   if (audioContext.state === "suspended") {
@@ -330,13 +338,26 @@ soundToggle.addEventListener("click", async () => {
   setSoundEnabled(soundEnabled);
 });
 
-function prepareStartupAudio() {
-  if (!AudioContextClass) {
+function initializeMotionState() {
+  document.documentElement.classList.toggle("has-gsap", Boolean(motion));
+
+  if (!motion) {
     return;
   }
 
-  if (!audioContext) {
-    createAudioGraph();
+  motion.set(screenBoot, { autoAlpha: 0 });
+  motion.set(bootLineItems, { opacity: 0, y: 5, animation: "none" });
+  motion.set(screenRadiation, { autoAlpha: 0 });
+  motion.set(screenCorruption, { autoAlpha: 0, x: 0 });
+}
+
+function prepareStartupAudio() {
+  if (!hasHowler) {
+    return;
+  }
+
+  if (!audioContext && !createAudioGraph()) {
+    return;
   }
 
   if (audioContext.state === "suspended") {
@@ -354,36 +375,97 @@ function startBootSequence() {
   prepareStartupAudio();
   document.body.classList.remove("pda-is-off");
   document.body.classList.add("pda-is-booting");
-  screenOff.classList.remove("active");
   screenBoot.classList.add("active");
   playStartupSound();
   playBootSequenceSound();
 
-  window.setTimeout(() => {
-    isBooting = false;
-    isPoweredOn = true;
-    document.body.classList.remove("pda-is-booting");
-    document.body.classList.add("pda-is-on");
-    screenBoot.classList.remove("active");
-    triggerDataCorruption();
-    updateTelemetry(true);
+  if (motion) {
+    runBootTimeline();
+    return;
+  }
 
-    if (!prefersReducedMotion && !radiationStarted) {
-      radiationStarted = true;
-      window.setTimeout(scheduleRadiationEvent, 2600);
-    }
-  }, 2800);
+  screenOff.classList.remove("active");
+  window.setTimeout(finishBootSequence, 2800);
+}
+
+function runBootTimeline() {
+  if (bootTimeline) {
+    bootTimeline.kill();
+  }
+
+  motion.killTweensOf([screenOff, screenBoot, pdaScreen, bootLineItems]);
+  motion.set(screenBoot, { autoAlpha: 0 });
+  motion.set(bootLineItems, { opacity: 0, y: 5, animation: "none" });
+
+  bootTimeline = motion.timeline({ onComplete: finishBootSequence });
+  bootTimeline
+    .to(screenOff, {
+      autoAlpha: 0,
+      duration: 0.18,
+      ease: "power1.out",
+      onComplete: () => screenOff.classList.remove("active")
+    })
+    .to(screenBoot, { autoAlpha: 1, duration: 0.12, ease: "none" }, 0.08)
+    .to(bootLineItems, {
+      opacity: 1,
+      y: 0,
+      duration: 0.12,
+      stagger: 0.38,
+      ease: "none"
+    }, 0.18)
+    .to(pdaScreen, {
+      filter: "brightness(1.22)",
+      duration: 0.08,
+      repeat: 5,
+      yoyo: true,
+      ease: "none"
+    }, 0.18)
+    .to(screenBoot, { autoAlpha: 0, duration: 0.28, ease: "power1.in" }, 2.52);
+}
+
+function finishBootSequence() {
+  isBooting = false;
+  isPoweredOn = true;
+  bootTimeline = null;
+  document.body.classList.remove("pda-is-booting");
+  document.body.classList.add("pda-is-on");
+  screenBoot.classList.remove("active");
+
+  if (motion) {
+    motion.set(screenBoot, { autoAlpha: 0 });
+    motion.set(pdaScreen, { clearProps: "filter" });
+  }
+
+  triggerDataCorruption();
+  updateTelemetry(true);
+
+  if (!prefersReducedMotion && !radiationStarted) {
+    radiationStarted = true;
+    window.setTimeout(scheduleRadiationEvent, 2600);
+  }
 }
 
 function powerOffPda() {
   isPoweredOn = false;
   isBooting = false;
+  if (bootTimeline) {
+    bootTimeline.kill();
+    bootTimeline = null;
+  }
   document.body.classList.remove("pda-is-on", "pda-is-booting");
   document.body.classList.add("pda-is-off");
   screenBoot.classList.remove("active");
   screenOff.classList.add("active");
   screenRadiation.classList.remove("is-active");
   screenCorruption.classList.remove("is-active");
+
+  if (motion) {
+    motion.killTweensOf([screenOff, screenBoot, screenRadiation, screenCorruption, pdaScreen]);
+    motion.set(screenBoot, { autoAlpha: 0 });
+    motion.set(screenRadiation, { autoAlpha: 0 });
+    motion.set(screenCorruption, { autoAlpha: 0, x: 0 });
+    motion.fromTo(screenOff, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.2, ease: "power1.out" });
+  }
 
   if (soundEnabled && audioContext) {
     soundEnabled = false;
@@ -396,13 +478,30 @@ function setActiveTab(tabName) {
     return;
   }
 
+  const currentPanel = document.querySelector(".tab-panel.active");
+  const nextPanel = document.querySelector(`#tab-${tabName}`);
+
   tabButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.tab === tabName);
   });
 
-  tabPanels.forEach((panel) => {
-    panel.classList.toggle("active", panel.id === `tab-${tabName}`);
-  });
+  if (motion && nextPanel && currentPanel !== nextPanel) {
+    if (currentPanel) {
+      currentPanel.classList.remove("active");
+    }
+
+    nextPanel.classList.add("active");
+    motion.killTweensOf(nextPanel);
+    motion.fromTo(
+      nextPanel,
+      { autoAlpha: 0, y: 8, filter: "brightness(1.65)" },
+      { autoAlpha: 1, y: 0, filter: "brightness(1)", duration: 0.32, ease: "power2.out", clearProps: "filter" }
+    );
+  } else {
+    tabPanels.forEach((panel) => {
+      panel.classList.toggle("active", panel.id === `tab-${tabName}`);
+    });
+  }
 
   activeTask.textContent = tabTasks[tabName] || tabTasks.map;
   triggerDataCorruption();
@@ -492,6 +591,7 @@ function triggerRadiationEvent() {
   radiationLayer.classList.remove("is-pulsing", "is-sweeping");
   void radiationLayer.offsetWidth;
   radiationLayer.classList.add("is-pulsing");
+  animateGlobalRadiation();
   triggerScreenRadiation();
   playRadiationSound();
 
@@ -508,8 +608,52 @@ function triggerRadiationEvent() {
   }, 1250);
 }
 
+function animateGlobalRadiation() {
+  if (!motion) {
+    return;
+  }
+
+  motion.killTweensOf(radiationLayer);
+  motion.fromTo(
+    radiationLayer,
+    { filter: "brightness(1) saturate(1)" },
+    {
+      filter: "brightness(1.32) saturate(1.35)",
+      duration: 0.18,
+      repeat: 1,
+      yoyo: true,
+      ease: "none",
+      clearProps: "filter"
+    }
+  );
+}
+
 function triggerScreenRadiation() {
   if (prefersReducedMotion) {
+    return;
+  }
+
+  if (motion) {
+    screenRadiation.classList.remove("is-active");
+    void screenRadiation.offsetWidth;
+    screenRadiation.classList.add("is-active");
+    motion.killTweensOf(screenRadiation);
+    motion.fromTo(
+      screenRadiation,
+      { autoAlpha: 0 },
+      {
+        autoAlpha: 1,
+        duration: 0.14,
+        repeat: 1,
+        repeatDelay: 0.54,
+        yoyo: true,
+        ease: "power2.out",
+        onComplete: () => {
+          screenRadiation.classList.remove("is-active");
+          motion.set(screenRadiation, { autoAlpha: 0 });
+        }
+      }
+    );
     return;
   }
 
@@ -524,6 +668,23 @@ function triggerScreenRadiation() {
 
 function triggerDataCorruption() {
   if (!isPoweredOn || prefersReducedMotion) {
+    return;
+  }
+
+  if (motion) {
+    screenCorruption.classList.add("is-active");
+    motion.killTweensOf(screenCorruption);
+    motion.timeline({
+      onComplete: () => {
+        screenCorruption.classList.remove("is-active");
+        motion.set(screenCorruption, { autoAlpha: 0, x: 0 });
+      }
+    })
+      .set(screenCorruption, { autoAlpha: 1, x: 0 })
+      .to(screenCorruption, { x: -7, duration: 0.08, ease: "none" })
+      .to(screenCorruption, { x: 5, duration: 0.08, ease: "none" })
+      .to(screenCorruption, { x: -2, duration: 0.12, ease: "none" })
+      .to(screenCorruption, { autoAlpha: 0, x: 0, duration: 0.18, ease: "power1.out" });
     return;
   }
 
@@ -548,6 +709,20 @@ function createRadiationSpeck() {
   speck.style.setProperty("--drift-y", `${randomBetween(-18, 18)}px`);
 
   radiationLayer.append(speck);
+
+  if (motion) {
+    const life = Number.parseFloat(speck.style.getPropertyValue("--life")) / 1000;
+    const driftX = Number.parseFloat(speck.style.getPropertyValue("--drift-x"));
+    const driftY = Number.parseFloat(speck.style.getPropertyValue("--drift-y"));
+
+    motion.timeline({ onComplete: () => speck.remove() })
+      .set(speck, { xPercent: -50, yPercent: -50, scale: 0.35, autoAlpha: 0 })
+      .to(speck, { autoAlpha: 1, duration: life * 0.16, ease: "power1.out" }, 0)
+      .to(speck, { x: driftX, y: driftY, scale: 1, duration: life, ease: "power2.out" }, 0)
+      .to(speck, { autoAlpha: 0, duration: life * 0.34, ease: "power1.in" }, life * 0.66);
+    return;
+  }
+
   speck.addEventListener("animationend", () => speck.remove(), { once: true });
 }
 
@@ -565,14 +740,37 @@ function setPillState(element, state) {
 }
 
 function createAudioGraph() {
-  audioContext = new AudioContextClass();
+  if (!hasHowler || !window.Howler.usingWebAudio) {
+    return false;
+  }
+
+  window.Howler.autoSuspend = false;
+  window.Howler.volume(1);
+
+  if (!audioUnlockSound) {
+    audioUnlockSound = new window.Howl({
+      src: ["data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA"],
+      volume: 0,
+      preload: true
+    });
+  }
+
+  const unlockId = audioUnlockSound.play();
+  audioUnlockSound.stop(unlockId);
+
+  audioContext = window.Howler.ctx;
+
+  if (!audioContext) {
+    return false;
+  }
+
   audioMaster = audioContext.createGain();
   ambientBus = audioContext.createGain();
 
   audioMaster.gain.value = 0.0001;
   ambientBus.gain.value = 0.32;
   ambientBus.connect(audioMaster);
-  audioMaster.connect(audioContext.destination);
+  audioMaster.connect(window.Howler.masterGain || audioContext.destination);
 
   createDrone(38, "sine", 0.13, -8);
   createDrone(56, "triangle", 0.055, 5);
@@ -587,6 +785,8 @@ function createAudioGraph() {
   lfo.connect(lfoGain);
   lfoGain.connect(ambientBus.gain);
   lfo.start();
+
+  return true;
 }
 
 function createDrone(frequency, type, gainValue, detune) {
@@ -623,9 +823,17 @@ function createAmbientNoise() {
 
 function setSoundEnabled(enabled, options = {}) {
   const now = audioContext.currentTime;
+  const targetVolume = enabled ? 0.58 : 0.0001;
 
   audioMaster.gain.cancelScheduledValues(now);
-  audioMaster.gain.setTargetAtTime(enabled ? 0.58 : 0.0001, now, 0.42);
+
+  if (motion) {
+    motion.killTweensOf(audioMaster.gain);
+    motion.to(audioMaster.gain, { value: targetVolume, duration: 0.42, ease: "power2.out" });
+  } else {
+    audioMaster.gain.setTargetAtTime(targetVolume, now, 0.42);
+  }
+
   soundToggle.classList.toggle("is-on", enabled);
   soundToggle.setAttribute("aria-pressed", String(enabled));
   soundToggle.setAttribute("aria-label", enabled ? "Выключить звук" : "Включить звук");
